@@ -29,13 +29,13 @@
     breaklines=true,
 }
 
-% Permet d'utiliser les logos de rapport_exemple sans copier les images
-\graphicspath{{../rapport_exemple/img/}{./img/}}
+% Logos du rapport (dossier rapport/img)
+\graphicspath{{./img/}}
 
-\title{Impl\'ementation d'algorithmes de flots\\Flot maximum, coupe minimale et flot de co\^ut minimum (Java)}
-\author{NOM Pr\'enom}
-\supervisor{Encadrant(e) / enseignant(e)}
-\date{Avril 2026}
+\title{Implémentation d'algorithmes de flots\\Flot maximum, coupe minimale et flot de coût minimum (Java)}
+\author{DI RUSSO Marc}
+\supervisor{M. REGIN}
+\date{}
 \type{Projet}
 
 \begin{document}
@@ -43,11 +43,11 @@
 \maketitle
 
 \begin{abstract}
-Ce rapport pr\'esente une impl\'ementation \emph{from scratch} en Java (sans biblioth\`eques de flots) de trois briques classiques de recherche op\'erationnelle sur r\'eseaux :
-(i) le calcul d'un flot maximum par recherche de chemins augmentants dans le graphe r\'esiduel (Edmonds--Karp),
-(ii) l'extraction d'une coupe minimale (min-cut) \`a partir du graphe r\'esiduel final,
-(iii) le calcul d'un flot de co\^ut minimum par augmentations successives (Successive Shortest Path) en deux variantes : Bellman--Ford (co\^uts n\'egatifs) et Dijkstra avec renormalisation par potentiels.
-Nous d\'ecrivons la mod\'elisation, la structure de donn\'ees du graphe r\'esiduel, les algorithmes, une analyse de complexit\'e, et une strat\'egie de validation (benchmarks de coh\'erence entre les deux variantes de flot de co\^ut minimum).
+Ce rapport présente une implémentation \emph{from scratch} en Java (sans bibliothèques de flots) de trois briques classiques de recherche opérationnelle sur réseaux :
+(i) le calcul d'un flot maximum par recherche de chemins augmentants dans le graphe résiduel (Edmonds--Karp),
+(ii) l'extraction d'une coupe minimale (min-cut) à partir du graphe résiduel final,
+(iii) le calcul d'un flot de coût minimum par augmentations successives (Successive Shortest Path) en deux variantes : Bellman--Ford (coûts négatifs) et Dijkstra avec renormalisation par potentiels.
+Nous décrivons la modélisation, la structure de données du graphe résiduel, les algorithmes, une analyse de complexité, et une stratégie de validation (benchmarks de cohérence entre les deux variantes de flot de coût minimum).
 \end{abstract}
 
 \clearpage
@@ -56,94 +56,94 @@ Nous d\'ecrivons la mod\'elisation, la structure de donn\'ees du graphe r\'esidu
 
 \section{Introduction}
 \subsection{Objectifs et livrables}
-La consigne demande (i) l'impl\'ementation d'un algorithme de flot maximum (Ford--Fulkerson) avec affichage du flot sur chaque arc, (ii) l'identification et l'extraction d'une coupe minimale (min-cut), (iii) un module de flot de co\^ut minimum avec deux variantes de plus court chemin, et (iv) une d\'etection de cycles n\'egatifs dans le graphe r\'esiduel pour garantir l'optimalit\'e.
+La consigne demande (i) l'implémentation d'un algorithme de flot maximum (Ford--Fulkerson) avec affichage du flot sur chaque arc, (ii) l'identification et l'extraction d'une coupe minimale (min-cut), (iii) un module de flot de coût minimum avec deux variantes de plus court chemin, et (iv) une détection de cycles négatifs dans le graphe résiduel pour garantir l'optimalité.
 
-Le projet est r\'ealis\'e en Java et ne d\'epend que de la biblioth\`eque standard (aucune librairie de flots, NetworkX/igraph, etc.).
+Le projet est réalisé en Java et ne dépend que de la bibliothèque standard (aucune librairie de flots, NetworkX/igraph, etc.).
 
 \subsection{Organisation}
-Le rapport est organis\'e comme suit : mod\'elisation et graphe r\'esiduel (Section~\ref{sec:model}), structure de donn\'ees (Section~\ref{sec:ds}), algorithmes (Section~\ref{sec:algos}), complexit\'es (Section~\ref{sec:complex}), validation (Section~\ref{sec:validation}).
+Le rapport est organisé comme suit : modélisation et graphe résiduel (Section~\ref{sec:model}), structure de données (Section~\ref{sec:ds}), algorithmes (Section~\ref{sec:algos}), complexités (Section~\ref{sec:complex}), validation (Section~\ref{sec:validation}).
 
-\section{Mod\'elisation : graphes, flots, r\'esiduel}\label{sec:model}
+\section{Modélisation : graphes, flots, résiduel}\label{sec:model}
 \subsection{Graphe et flot}
-On consid\`ere un graphe orient\'e $G=(X,U)$, o\`u chaque arc $(i,j)\in U$ poss\`ede une capacit\'e $u(i,j)$ et (\`eventuellement) un co\^ut $c(i,j)$. Un flot est une fonction $f(i,j)$ telle que :
+On considère un graphe orienté $G=(X,U)$, où chaque arc $(i,j)\in U$ possède une capacité $u(i,j)$ et (éventuellement) un coût $c(i,j)$. Un flot est une fonction $f(i,j)$ telle que :
 \begin{itemize}
-    \item \textbf{Capacit\'e} : $0 \le f(i,j) \le u(i,j)$.
+    \item \textbf{Capacité} : $0 \le f(i,j) \le u(i,j)$.
     \item \textbf{Conservation} : pour tout noeud $v\ne s,t$, $\sum_i f(i,v) = \sum_j f(v,j)$.
 \end{itemize}
 
-\subsection{Graphe r\'esiduel}
-Le graphe r\'esiduel $R(f)$ est essentiel pour Ford--Fulkerson et pour le flot de co\^ut minimum.
+\subsection{Graphe résiduel}
+Le graphe résiduel $R(f)$ est essentiel pour Ford--Fulkerson et pour le flot de coût minimum.
 Pour chaque arc $(i,j)$ du graphe initial :
 \begin{itemize}
-    \item si $f(i,j) < u(i,j)$, on ajoute un \textbf{arc avant} $(i,j)$ de capacit\'e r\'esiduelle $r(i,j)=u(i,j)-f(i,j)$;
-    \item si $f(i,j) > 0$, on ajoute un \textbf{arc arri\`ere} $(j,i)$ de capacit\'e r\'esiduelle $f(i,j)$.
+    \item si $f(i,j) < u(i,j)$, on ajoute un \textbf{arc avant} $(i,j)$ de capacité résiduelle $r(i,j)=u(i,j)-f(i,j)$;
+    \item si $f(i,j) > 0$, on ajoute un \textbf{arc arrière} $(j,i)$ de capacité résiduelle $f(i,j)$.
 \end{itemize}
-Dans le cas du flot de co\^ut minimum, l'arc arri\`ere doit avoir un co\^ut oppos\'e : $c(j,i) = -c(i,j)$.
+Dans le cas du flot de coût minimum, l'arc arrière doit avoir un coût opposé : $c(j,i) = -c(i,j)$.
 
-\section{Structure de donn\'ees}\label{sec:ds}
-\subsection{Listes d'adjacence et arcs coupl\'es}
-Le graphe r\'esiduel est repr\'esent\'e par des listes d'adjacence. Chaque arc original $u\to v$ est encod\'e par une paire d'ar\^etes coupl\'ees :
+\section{Structure de données}\label{sec:ds}
+\subsection{Listes d'adjacence et arcs couplés}
+Le graphe résiduel est représenté par des listes d'adjacence. Chaque arc original $u\to v$ est encodé par une paire d'arêtes couplées :
 \begin{itemize}
-    \item une ar\^ete \og avant \fg{} de capacit\'e $\texttt{cap}$ et co\^ut $\texttt{cost}$,
-    \item une ar\^ete \og arri\`ere \fg{} de capacit\'e initiale 0 et co\^ut $-\texttt{cost}$.
+    \item une arête \og avant \fg{} de capacité $\texttt{cap}$ et coût $\texttt{cost}$,
+    \item une arête \og arrière \fg{} de capacité initiale 0 et coût $-\texttt{cost}$.
 \end{itemize}
-Les mises \`a jour lors d'une augmentation modifient simultan\'ement la capacit\'e r\'esiduelle de l'ar\^ete avant et de l'ar\^ete arri\`ere.
+Les mises à jour lors d'une augmentation modifient simultanément la capacité résiduelle de l'arête avant et de l'arête arrière.
 
 \subsection{Convention d'indexation}
-En interne, on utilise syst\'ematiquement les indices $0..n-1$ (adapt\'e aux tableaux Java). Pour les instances fournies avec des sommets $1..n$, un flag explicite \texttt{--one-based} convertit les sommets lus via $-1$. Les sorties r\'eutilisent la convention choisie (0-based par d\'efaut, 1-based avec \texttt{--one-based}).
+En interne, on utilise systématiquement les indices $0..n-1$ (adapté aux tableaux Java). Pour les instances fournies avec des sommets $1..n$, un flag explicite \texttt{--one-based} convertit les sommets lus via $-1$. Les sorties réutilisent la convention choisie (0-based par défaut, 1-based avec \texttt{--one-based}).
 
 \section{Algorithmes}\label{sec:algos}
 \subsection{Flot maximum : Edmonds--Karp}
-La recherche de chemins augmentants est effectu\'ee dans $R(f)$ par BFS (Edmonds--Karp). \`A chaque it\'eration :
+La recherche de chemins augmentants est effectuée dans $R(f)$ par BFS (Edmonds--Karp). À chaque itération :
 \begin{enumerate}
-    \item on trouve un chemin $s\to t$ sur les ar\^etes de capacit\'e r\'esiduelle strictement positive,
+    \item on trouve un chemin $s\to t$ sur les arêtes de capacité résiduelle strictement positive,
     \item on calcule le goulot $\Delta = \min r(i,j)$ le long du chemin,
-    \item on augmente le flot (mise \`a jour des capacit\'es r\'esiduelles avant/arri\`ere).
+    \item on augmente le flot (mise à jour des capacités résiduelles avant/arrière).
 \end{enumerate}
 
 \subsection{Coupe minimale (min-cut)}
-Une fois le flot maximum atteint, on calcule $S$, l'ensemble des sommets atteignables depuis $s$ dans le graphe r\'esiduel final. La coupe minimale est donn\'ee par les arcs originaux $(i,j)$ tels que $i\in S$ et $j\notin S$.
+Une fois le flot maximum atteint, on calcule $S$, l'ensemble des sommets atteignables depuis $s$ dans le graphe résiduel final. La coupe minimale est donnée par les arcs originaux $(i,j)$ tels que $i\in S$ et $j\notin S$.
 
-\subsection{Flot de co\^ut minimum : Successive Shortest Path}
-On cherche \`a envoyer du flot par augmentations successives en suivant \`a chaque fois un chemin de co\^ut minimal dans le graphe r\'esiduel.
+\subsection{Flot de coût minimum : Successive Shortest Path}
+On cherche à envoyer du flot par augmentations successives en suivant à chaque fois un chemin de coût minimal dans le graphe résiduel.
 Cette approche permet :
 \begin{itemize}
-    \item un \textbf{mode F fix\'e} : s'arr\^eter \`a l'atteinte d'une demande $F$ (si $F$ est fourni),
-    \item un \textbf{mode saturation} : pousser jusqu'\`a impossibilit\'e d'augmenter (min-cost max-flow) si $F$ est absent.
+    \item un \textbf{mode F fixé} : s'arrêter à l'atteinte d'une demande $F$ (si $F$ est fourni),
+    \item un \textbf{mode saturation} : pousser jusqu'à impossibilité d'augmenter (min-cost max-flow) si $F$ est absent.
 \end{itemize}
 
 \paragraph{Variante A : Bellman--Ford.}
-Bellman--Ford est utilis\'e \`a chaque augmentation pour g\'erer les co\^uts n\'egatifs (li\'es aux arcs arri\`ere).
+Bellman--Ford est utilisé à chaque augmentation pour gérer les coûts négatifs (liés aux arcs arrière).
 
 \paragraph{Variante B : Dijkstra + renormalisation.}
-Pour permettre Dijkstra, on utilise des potentiels $\pi$ et les co\^uts r\'eduits :
+Pour permettre Dijkstra, on utilise des potentiels $\pi$ et les coûts réduits :
 \[
     c_R(u,v) = \pi[u] + c(u,v) - \pi[v] \ge 0.
 \]
-Dijkstra est ex\'ecut\'e sur $c_R$ (PriorityQueue), puis les potentiels sont mis \`a jour.
+Dijkstra est exécuté sur $c_R$ (PriorityQueue), puis les potentiels sont mis à jour.
 
-\subsection{D\'etection de cycles n\'egatifs}
-Un flot est de co\^ut minimum si et seulement si le graphe r\'esiduel ne contient aucun cycle de co\^ut n\'egatif. On d\'etecte un tel cycle en relaxant toutes les ar\^etes r\'esiduelles (capacit\'e $>0$) $n$ fois (Bellman--Ford). Si une am\'elioration est encore possible \`a la $n$-i\`eme passe, un cycle n\'egatif existe.
+\subsection{Détection de cycles négatifs}
+Un flot est de coût minimum si et seulement si le graphe résiduel ne contient aucun cycle de coût négatif. On détecte un tel cycle en relaxant toutes les arêtes résiduelles (capacité $>0$) $n$ fois (Bellman--Ford). Si une amélioration est encore possible à la $n$-ième passe, un cycle négatif existe.
 
-\section{Complexit\'e}\label{sec:complex}
+\section{Complexité}\label{sec:complex}
 \begin{itemize}
     \item Edmonds--Karp : $\mathcal{O}(V\,E^2)$.
-    \item Bellman--Ford (par augmentation) : $\mathcal{O}(V\,E)$, multipli\'e par le nombre d'augmentations.
-    \item Dijkstra + potentiels (par augmentation) : $\mathcal{O}(E\log V)$, multipli\'e par le nombre d'augmentations.
+    \item Bellman--Ford (par augmentation) : $\mathcal{O}(V\,E)$, multiplié par le nombre d'augmentations.
+    \item Dijkstra + potentiels (par augmentation) : $\mathcal{O}(E\log V)$, multiplié par le nombre d'augmentations.
 \end{itemize}
 
-\section{Validation et r\'esultats}\label{sec:validation}
+\section{Validation et résultats}\label{sec:validation}
 \subsection{Jeux de test}
 Des fichiers d'exemples sont fournis (format \og liste d'arcs \fg{}). En particulier :
 \begin{itemize}
-    \item un exemple \texttt{maxflow} (co\^uts \`a 0) pour valider le flot maximum et la min-cut,
-    \item un exemple \texttt{mincost} avec $F$ fix\'e pour valider le flot de co\^ut minimum.
+    \item un exemple \texttt{maxflow} (coûts à 0) pour valider le flot maximum et la min-cut,
+    \item un exemple \texttt{mincost} avec $F$ fixé pour valider le flot de coût minimum.
 \end{itemize}
 
-\subsection{Bench de coh\'erence}
-Un mode \texttt{bench} compare automatiquement les r\'esultats (flow, cost) de Bellman--Ford et Dijkstra+potentiels pour plusieurs valeurs de $F$ (jusqu'\`a $\min(F_{max},20)$). L'\'egalit\'e des r\'esultats constitue une v\'erification forte de la correction.
+\subsection{Bench de cohérence}
+Un mode \texttt{bench} compare automatiquement les résultats (flow, cost) de Bellman--Ford et Dijkstra+potentiels pour plusieurs valeurs de $F$ (jusqu'à $\min(F_{max},20)$). L'égalité des résultats constitue une vérification forte de la correction.
 
-\subsection{Exemple de sortie (r\'esum\'e)}
+\subsection{Exemple de sortie (résumé)}
 \begin{lstlisting}
 TOTAL_FLOW = 15
 MIN_CUT_S ...
@@ -153,6 +153,6 @@ NEGATIVE_CYCLE_IN_RESIDUAL = false
 \end{lstlisting}
 
 \section{Conclusion}
-Le projet fournit une impl\'ementation propre et reproductible des algorithmes demand\'es, avec une structure de donn\'ees r\'esiduelle unique r\'eutilis\'ee pour le flot maximum, la min-cut, et le flot de co\^ut minimum (deux variantes). La validation par bench BF vs Dijkstra renforce la confiance dans la correction.
+Le projet fournit une implémentation propre et reproductible des algorithmes demandés, avec une structure de données résiduelle unique réutilisée pour le flot maximum, la min-cut, et le flot de coût minimum (deux variantes). La validation par bench BF vs Dijkstra renforce la confiance dans la correction.
 
 \end{document}

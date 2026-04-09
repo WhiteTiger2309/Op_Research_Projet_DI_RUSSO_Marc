@@ -1,0 +1,17 @@
+# Java build outputs
+/out/
+*.class
+
+# LaTeX build artifacts (rapport)
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/

@@ -12,5 +12,5 @@ pdflatex -interaction=nonstopmode rapport_projet.tex
 Le fichier PDF généré est `rapport_projet.pdf`.
 
 ## Notes
-- La classe `rapport.cls` est reprise du dossier `rapport_exemple/`.
-- Les logos sont chargés depuis `rapport_exemple/img/` via `\graphicspath{...}` dans `rapport_projet.tex`.
+- La classe `rapport.cls` est incluse dans ce dossier.
+- Les logos sont inclus dans `rapport/img/`.
