@@ -59,6 +59,5 @@ java -cp out Main bench examples/mincostF1.txt
 - `MIN_CUT_S` et `MIN_CUT_EDGES` (mode maxflow)
 - `NEGATIVE_CYCLE_IN_RESIDUAL` (modes mincost)
 
-## Note administrative
-- Nom du dépôt attendu (consigne) : `Op_Research_Projet_NOM_Prenom`
+
 
